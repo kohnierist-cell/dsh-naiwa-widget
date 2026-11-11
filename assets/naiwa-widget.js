@@ -154,7 +154,7 @@
     '.dshnw-bubble.dshnw-below.dshnw-open{transform:scaleY(-1) scale(1) translate(0,0)}',
     '.dshnw-bsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}',
     '.dshnw-bshape,.dshnw-btail,.dshnw-bpuff{fill:#fffdf8;stroke:#1d2f63;stroke-width:15;stroke-linejoin:round;paint-order:stroke fill;filter:drop-shadow(0 4px 8px rgba(20,30,70,.2))}',
-    '.dshnw-text{position:absolute;left:7%;top:6%;width:72%;height:74%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1.5%}',
+    '.dshnw-text{position:absolute;left:10%;top:9%;width:80%;height:78%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1.5%}',
     '.dshnw-root.dshnw-left .dshnw-text{transform:scaleX(-1)}',
     '.dshnw-bubble.dshnw-below .dshnw-bsvg,.dshnw-bubble.dshnw-below .dshnw-text{transform:scaleY(-1)}',
     '.dshnw-root.dshnw-left .dshnw-bubble.dshnw-below .dshnw-text{transform:scale(-1,-1)}',
@@ -263,10 +263,8 @@
     bubbleWrap = el('div', 'dshnw-bubble', body)
     bubbleWrap.innerHTML =
       '<svg class="dshnw-bsvg" viewBox="0 0 1026 700" preserveAspectRatio="none">' +
-      '<ellipse class="dshnw-bshape" cx="440" cy="250" rx="386" ry="238" />' +
-      '<ellipse class="dshnw-btail" cx="846" cy="452" rx="104" ry="74" transform="rotate(-18 846 452)" />' +
-      '<circle class="dshnw-bpuff" cx="900" cy="556" r="40" />' +
-      '<circle class="dshnw-bpuff" cx="944" cy="640" r="26" />' +
+      '<path class="dshnw-bshape" d="M 122 8 H 904 Q 1014 8 1014 118 V 510 Q 1014 620 930 620 L 875 700 L 810 620 H 122 Q 12 620 12 510 V 118 Q 12 8 122 8 Z" />' +
+
       '</svg>'
     bubbleHost = el('div', 'dshnw-text', bubbleWrap)
 
@@ -298,7 +296,7 @@
       '<button type="button" data-act="refresh">刷新余额</button>' +
       '</div>' +
       '<div class="dshnw-mrow dshnw-mrow-btns"><button type="button" data-act="reset-usage">今日归零</button></div>' +
-      '<div class="dshnw-mnote">拖动奶娃移动 · 双击唤出菜单 · 连点它会有反应</div>'
+      '<div class="dshnw-mnote">拖动移动 · 双击菜单</div>'
     document.body.appendChild(menuEl)
 
     var range = menuEl.querySelector('.dshnw-range')
@@ -380,12 +378,15 @@
     img.style.width = 'auto'
     // 气泡字号 / 表情 / 粒子尺寸都以 --nh 为基准
     root.style.setProperty('--nh', imgH + 'px')
-    bubbleH = Math.round(imgH * 1.06)
-    bubbleW = Math.round(bubbleH * BUBBLE_ASPECT)
+    bubbleH = Math.round(imgH * 0.86)
+    bubbleW = Math.round(bubbleH * 1.5)
     bubbleWrap.style.height = bubbleH + 'px'
     bubbleWrap.style.width = bubbleW + 'px'
-    bubbleWrap.style.left = (-Math.round(imgW * 0.52)) + 'px'
-    bubbleWrap.style.bottom = Math.round(imgH * 0.74) + 'px'
+    // 尾巴尖（气泡宽 86%、高 96% 处）对准头顶中心
+    bubbleWrap.style.left = Math.round(imgW * 0.5 - bubbleW * 0.853) + 'px'
+    bubbleWrap.style.bottom = Math.round(imgH * 0.98) + 'px'
+    // 气泡内文字按气泡体积缩放，避免字撑破小气泡
+    bubbleWrap.style.setProperty('--nh', Math.round(bubbleH * 0.95) + 'px')
     root.style.width = imgW + 'px'
     root.style.height = imgH + 'px'
     if (keepAnchor && prevW && state.left !== null) {
@@ -944,14 +945,32 @@
     elm.style.visibility = ''
   }
 
+  // 菜单贴在奶蛙左侧或右侧，垂直居中，避免盖住本体
+  function placeAside(elm, r) {
+    elm.style.visibility = 'hidden'
+    var mw = elm.offsetWidth
+    var mh = elm.offsetHeight
+    var vw = window.innerWidth
+    var vh = window.innerHeight
+    var left
+    if (vw - r.right >= mw + 16) left = r.right + 12
+    else left = r.left - mw - 12
+    left = Math.max(8, Math.min(vw - mw - 8, left))
+    var top = Math.round(r.top + (r.height - mh) / 2)
+    top = Math.max(8, Math.min(vh - mh - 8, top))
+    elm.style.left = Math.round(left) + 'px'
+    elm.style.top = top + 'px'
+    elm.style.visibility = ''
+  }
+
   function placeMenu() {
-    if (!menuOpen || !btn) return
-    placeAbove(menuEl, btn.getBoundingClientRect())
+    if (!menuOpen || !root) return
+    placeAside(menuEl, root.getBoundingClientRect())
   }
 
   function placePanel() {
-    if (!panelOpen || !btn) return
-    placeAbove(panelEl, btn.getBoundingClientRect())
+    if (!panelOpen || !root) return
+    placeAside(panelEl, root.getBoundingClientRect())
   }
 
   function toggleMenu() { menuOpen ? closeMenu() : openMenu() }
